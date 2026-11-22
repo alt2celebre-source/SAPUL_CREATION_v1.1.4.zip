@@ -1,0 +1,46 @@
+name: Extract SAPUL_CREATION_v1.1.4 ZIP
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip_path:
+        description: "Path ng ZIP file sa repo"
+        required: true
+        default: "SAPUL_CREATION_v1.1.4.zip"
+      target_dir:
+        description: "Folder kung saan ie-extract (gamitin ang '.' para sa root)"
+        required: true
+        default: "."
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract ZIP archive
+        run: |
+          if [ ! -f "${{ inputs.zip_path }}" ]; then
+            echo "Hindi nahanap ang file: ${{ inputs.zip_path }}"
+            exit 1
+          fi
+
+          mkdir -p "${{ inputs.target_dir }}"
+          unzip -o "${{ inputs.zip_path }}" -d "${{ inputs.target_dir }}"
+
+      - name: Commit and push extracted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          if git diff --staged --quiet; then
+            echo "Walang bagong pagbabago para i-commit."
+          else
+            git commit -m "Extract ${{ inputs.zip_path }}"
+            git push
+          fi
